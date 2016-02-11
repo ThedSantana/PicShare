@@ -38,7 +38,7 @@ public class JsonParserTest extends TestCase {
 
     public void testGetImageURL() throws Exception {
         JsonParser parser = new JsonParser(testJson);
-        ArrayList<String> previewUrls = parser.getImageURL(true);
+        ArrayList<String> previewUrls = parser.getImageURLList(true);
 
         assertEquals(testJsonResults.length , previewUrls.size());
 

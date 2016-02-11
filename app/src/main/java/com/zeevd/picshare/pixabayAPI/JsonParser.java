@@ -13,11 +13,11 @@ public class JsonParser {
 
     JSONObject jsonObj;
 
-    JsonParser(String json) throws JSONException {
+    public JsonParser(String json) throws JSONException {
         jsonObj = new JSONObject(json);
     }
 
-    public ArrayList<String> getImageURL(boolean previewStyleImage) throws JSONException {
+    public ArrayList<String> getImageURLList(boolean previewStyleImage) throws JSONException {
         ArrayList<String> imageUrls = new ArrayList<String>();
 
         String targetKey;

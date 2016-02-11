@@ -22,21 +22,32 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.zeevd.picshare.pixabayAPI.JsonParser;
 import com.zeevd.picshare.pixabayAPI.RestCaller;
 import com.zeevd.picshare.pixabayAPI.UriBuilder;
 
+import org.json.JSONException;
+
 import java.io.InputStream;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
+    OnRestComplete onRestComplete;
+    RestCaller restCaller;
+    JsonParser jsonParser;
+    public GridView imageGrid;
+    PicAdapter picAdapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        picAdapter = new PicAdapter(getApplicationContext(),new ArrayList<Bitmap>());
 
         //create the image grid and its adapter
-        GridView imageGrid = (GridView) this.findViewById(R.id.gridView);
-        imageGrid.setAdapter(new PicAdapter(this));
+        imageGrid = (GridView) this.findViewById(R.id.gridView);
+        imageGrid.setAdapter(picAdapter);
 
         //Set editor action listener for the query edit text
         EditText queryEditText = (EditText) this.findViewById(R.id.query_text);
@@ -46,10 +57,24 @@ public class MainActivity extends AppCompatActivity {
                 if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                     topLevelProcess(v.getText().toString());
                     return true;
-                }
-                else return false;
+                } else return false;
             }
         });
+
+        onRestComplete = new OnRestComplete() {
+            @Override
+            public void onRestComplete(String json) {
+                try {
+                    jsonParser = new JsonParser(json);
+
+                    ArrayList<String> previewImageUrls = jsonParser.getImageURLList(true);
+                    if (previewImageUrls == null || previewImageUrls.isEmpty()) return;
+                    new DownloadImageTask().execute(previewImageUrls);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
 
 
 //        //Test to create and imageview based on a downloaded image
@@ -63,70 +88,77 @@ public class MainActivity extends AppCompatActivity {
 
         UriBuilder uriBuilder = new UriBuilder(searchQuery);
         Uri userSearchUri = uriBuilder.getSearchURI();
-        //todo: kick off next steps
 
+        restCaller = new RestCaller(onRestComplete);
+        restCaller.execute(userSearchUri);
 
     }
 
-}
 
-class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
-    ImageView bmImage;
-
-    public DownloadImageTask(ImageView bmImage) {
-        this.bmImage = bmImage;
-    }
-
-    protected Bitmap doInBackground(String... urls) {
-        String urldisplay = urls[0];
-        Bitmap mIcon11 = null;
-        try {
-            InputStream in = new java.net.URL(urldisplay).openStream();
-            mIcon11 = BitmapFactory.decodeStream(in);
-        } catch (Exception e) {
-            Log.e("Error", e.getMessage());
-            e.printStackTrace();
-        }
-        return mIcon11;
-    }
+    class DownloadImageTask extends AsyncTask<ArrayList<String>, Void, ArrayList<Bitmap>> {
 
 
-    protected void onPostExecute(Bitmap result) {
-        //pDlg.dismiss();
-        bmImage.setImageBitmap(result);
-    }
-}
-
-
-class PicAdapter extends BaseAdapter {
-    private Context context;
-
-    public PicAdapter(Context context) {
-        this.context = context;
-    }
-
-    @Override
-    public int getCount() {
-        return 4;//TODO: change when images become dynamic
-    }
-
-    @Override
-    public Object getItem(int position) {
-        return null;
-    }
-
-    @Override
-    public long getItemId(int position) {
-        return 0;
-    }
-
-    @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        if (convertView == null) {
-            convertView = new ImageView(context);
+        @Override
+        protected ArrayList<Bitmap> doInBackground(ArrayList<String>... params) {
+            ArrayList<Bitmap> bitmaps = new ArrayList<>();
+            Bitmap mIcon11 = null;
+            for (String urldisplay : params[0]) {
+                try {
+                    InputStream in = new java.net.URL(urldisplay).openStream();
+                    mIcon11 = BitmapFactory.decodeStream(in);
+                } catch (Exception e) {
+                    Log.e("Error", e.getMessage());
+                    e.printStackTrace();
+                }
+                bitmaps.add(mIcon11);
+            }
+            return bitmaps;
         }
 
-        ((ImageView) convertView).setImageResource(R.drawable.testpreview);//TODO display real images
-        return convertView;
+
+        protected void onPostExecute(ArrayList<Bitmap> result) {
+            picAdapter.updateImages(result);
+            picAdapter.notifyDataSetChanged();
+        }
+    }
+
+    class PicAdapter extends BaseAdapter {
+        private ArrayList<Bitmap> bitmapList;
+
+        public PicAdapter(Context context, ArrayList<Bitmap> bitmapList) {
+            if (bitmapList!=null)
+                this.bitmapList = bitmapList;
+            else
+                this.bitmapList = new ArrayList<>();
+        }
+
+        @Override
+        public int getCount() {
+            return bitmapList.size();
+        }
+
+        @Override
+        public Object getItem(int position) {
+            return null;
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return 0;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            if (convertView==null) convertView = new ImageView(getApplicationContext());
+            ((ImageView) convertView).setImageBitmap(bitmapList.get(position));
+            return convertView;
+
+        }
+
+        public void updateImages(ArrayList<Bitmap> images){
+            this.bitmapList = new ArrayList<>();
+            this.bitmapList.addAll(images);
+            notifyDataSetInvalidated();
+        }
     }
 }
