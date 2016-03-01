@@ -1,8 +1,11 @@
 package com.zeevd.picshare;
 
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.media.Image;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -14,6 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Adapter;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
@@ -28,7 +32,11 @@ import com.zeevd.picshare.pixabayAPI.UriBuilder;
 
 import org.json.JSONException;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 
@@ -83,6 +91,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+
     public void topLevelProcess(String searchQuery) {
         if (searchQuery == null || searchQuery.isEmpty()) return;
 
@@ -92,6 +101,27 @@ public class MainActivity extends AppCompatActivity {
         restCaller = new RestCaller(onRestComplete);
         restCaller.execute(userSearchUri);
 
+    }
+
+    public void imageClicked(View view) {
+        ImageView imageView = (ImageView) view;
+        Bitmap b = Bitmap.createBitmap(imageView.getWidth(), imageView.getHeight(),  Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(b);
+        imageView.draw(canvas);
+        OutputStream fOut = null;
+        new File("/sdcard/temp").mkdir();
+        try {
+            fOut = new FileOutputStream("/sdcard/temp/image.jpg");
+            b.compress(Bitmap.CompressFormat.JPEG, 95, fOut);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        Intent shareIntent = new Intent();
+        shareIntent.setAction(Intent.ACTION_SEND);
+        shareIntent.putExtra(Intent.EXTRA_STREAM, b);
+        shareIntent.setType("image/jpeg");
+        startActivity(shareIntent);
     }
 
 
