@@ -6,19 +6,11 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
-/**
- * Created by zz on 2/7/16.
- */
 public class JsonParser {
 
-    JSONObject jsonObj;
-
-    public JsonParser(String json) throws JSONException {
-        jsonObj = new JSONObject(json);
-    }
-
-    public ArrayList<String> getImageURLList(boolean previewStyleImage) throws JSONException {
+    public static ArrayList<String> getImageURLList(String json, boolean previewStyleImage) throws JSONException {
         ArrayList<String> imageUrls = new ArrayList<String>();
+        JSONObject jsonObj = new JSONObject(json);
 
         String targetKey;
         if (previewStyleImage) targetKey = "previewURL";
@@ -33,7 +25,5 @@ public class JsonParser {
         }
         return imageUrls;
     }
-
-
 
 }

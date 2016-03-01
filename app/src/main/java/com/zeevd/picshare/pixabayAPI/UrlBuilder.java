@@ -2,10 +2,12 @@ package com.zeevd.picshare.pixabayAPI;
 
 import android.net.Uri;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Map;
 
 
-public class UriBuilder {
+public class UrlBuilder {
     //Basic URI information
     public final String API_KEY="2019053-608207730a6137da96dd87b74";
     public final String BASE_URL="https://pixabay.com/api/?";
@@ -20,7 +22,7 @@ public class UriBuilder {
 
     private Uri searchURI;
 
-    public UriBuilder(String searchQuery){
+    public UrlBuilder(String searchQuery){
         searchURI = Uri.parse(BASE_URL); //set up the uri using the base url
         searchURI = searchURI.buildUpon().appendQueryParameter(API_KEY_PARAM,API_KEY) //append the api key param
         .appendQueryParameter(IMAGE_QUERY_PARAM,searchQuery).build(); //append image search query
@@ -36,7 +38,7 @@ public class UriBuilder {
         searchURI = temp.build();
     }
 
-    public Uri getSearchURI() {
-        return searchURI;
+    public URL getSearchURL() throws MalformedURLException {
+        return new URL(searchURI.toString());
     }
 }
